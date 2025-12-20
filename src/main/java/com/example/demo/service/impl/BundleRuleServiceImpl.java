@@ -1,32 +1,51 @@
-package com.example.demo.service.impl;
+package com.example.demo.service;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
 
 import com.example.demo.model.BundleRule;
 import com.example.demo.repository.BundleRuleRepository;
-import com.example.demo.service.BundleRuleService;
 
-import java.util.List;
 @Service
 public class BundleRuleServiceImpl implements BundleRuleService {
 
-    private final BundleRuleRepository repo;
+    private final BundleRuleRepository bundleRuleRepository;
 
-    public BundleRuleServiceImpl(BundleRuleRepository repo) {
-        this.repo = repo;
+    public BundleRuleServiceImpl(BundleRuleRepository bundleRuleRepository) {
+        this.bundleRuleRepository = bundleRuleRepository;
     }
 
     @Override
-    public BundleRule createRule(BundleRule rule) {
-        if (rule.getDiscountPercentage() < 0 || rule.getDiscountPercentage() > 100)
-            throw new IllegalArgumentException("between 0 and 100");
-
-        if (rule.getRequiredProductIds() == null || rule.getRequiredProductIds().trim().isEmpty())
-            throw new IllegalArgumentException("cannot be empty");
-
-        return repo.save(rule);
+    public BundleRule createBundleRule(BundleRule bundleRule) {
+        return bundleRuleRepository.save(bundleRule);
     }
 
     @Override
-    public List<BundleRule> getActiveRules() {
-        return repo.findByActiveTrue();
+    public BundleRule getBundleRuleById(Long id) {
+        return bundleRuleRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<BundleRule> getAllBundleRules() {
+        return bundleRuleRepository.findAll();
+    }
+
+    @Override
+    public BundleRule updateBundleRule(Long id, BundleRule bundleRule) {
+        Optional<BundleRule> existing = bundleRuleRepository.findById(id);
+        if (existing.isPresent()) {
+            BundleRule br = existing.get();
+            br.setName(bundleRule.getName()); // example field
+            br.setDescription(bundleRule.getDescription()); // example field
+            return bundleRuleRepository.save(br);
+        }
+        return null;
+    }
+
+    @Override
+    public void deleteBundleRule(Long id) {
+        bundleRuleRepository.deleteById(id);
     }
 }
