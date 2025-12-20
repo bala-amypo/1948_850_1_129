@@ -1,5 +1,8 @@
 package com.example.demo.service.impl;
 
+
+import org.springframework.stereotype.Service;
+
 import com.example.demo.model.*;
 import com.example.demo.repository.*;
 import com.example.demo.service.DiscountService;
@@ -8,7 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-
+@Service
 public class DiscountServiceImpl implements DiscountService {
 
     private final DiscountApplicationRepository discountRepo;
