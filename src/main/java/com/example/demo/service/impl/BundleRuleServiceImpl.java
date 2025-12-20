@@ -1,12 +1,12 @@
-package com.example.demo.service;
+package com.example.demo.service.impl;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.example.demo.model.BundleRule;
 import com.example.demo.repository.BundleRuleRepository;
+import com.example.demo.service.BundleRuleService;
 
 @Service
 public class BundleRuleServiceImpl implements BundleRuleService {
@@ -18,34 +18,27 @@ public class BundleRuleServiceImpl implements BundleRuleService {
     }
 
     @Override
-    public BundleRule createBundleRule(BundleRule bundleRule) {
-        return bundleRuleRepository.save(bundleRule);
-    }
+    public BundleRule createRule(BundleRule rule) {
 
-    @Override
-    public BundleRule getBundleRuleById(Long id) {
-        return bundleRuleRepository.findById(id).orElse(null);
-    }
-
-    @Override
-    public List<BundleRule> getAllBundleRules() {
-        return bundleRuleRepository.findAll();
-    }
-
-    @Override
-    public BundleRule updateBundleRule(Long id, BundleRule bundleRule) {
-        Optional<BundleRule> existing = bundleRuleRepository.findById(id);
-        if (existing.isPresent()) {
-            BundleRule br = existing.get();
-            br.setName(bundleRule.getName()); // example field
-            br.setDescription(bundleRule.getDescription()); // example field
-            return bundleRuleRepository.save(br);
+        // Validation: required products
+        if (rule.getRequiredProductIds() == null ||
+            rule.getRequiredProductIds().trim().isEmpty()) {
+            throw new IllegalArgumentException("required products cannot be empty");
         }
-        return null;
+
+        // Validation: discount range
+        if (rule.getDiscountPercentage() == null ||
+            rule.getDiscountPercentage() < 0 ||
+            rule.getDiscountPercentage() > 100) {
+            throw new IllegalArgumentException("discount must be between 0 and 100");
+        }
+
+        rule.setActive(true);
+        return bundleRuleRepository.save(rule);
     }
 
     @Override
-    public void deleteBundleRule(Long id) {
-        bundleRuleRepository.deleteById(id);
+    public List<BundleRule> getActiveRules() {
+        return bundleRuleRepository.findByActiveTrue();
     }
 }
