@@ -1,9 +1,12 @@
 package com.example.demo.service;
 
-import com.example.demo.model.BundleRule;
 import java.util.List;
+import com.example.demo.model.BundleRule; // make sure you have this model class
 
 public interface BundleRuleService {
-    BundleRule createRule(BundleRule rule);
-    List<BundleRule> getActiveRules();
+    BundleRule createBundleRule(BundleRule bundleRule);
+    BundleRule getBundleRuleById(Long id);
+    List<BundleRule> getAllBundleRules();
+    BundleRule updateBundleRule(Long id, BundleRule bundleRule);
+    void deleteBundleRule(Long id);
 }

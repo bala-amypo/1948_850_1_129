@@ -5,7 +5,7 @@ import com.example.demo.repository.BundleRuleRepository;
 import com.example.demo.service.BundleRuleService;
 
 import java.util.List;
-
+@Service
 public class BundleRuleServiceImpl implements BundleRuleService {
 
     private final BundleRuleRepository repo;
