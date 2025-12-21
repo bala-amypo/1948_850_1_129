@@ -1,23 +1,19 @@
-package com.example.demo.service.impl;
-
-import org.springframework.stereotype.Service;
+package com.example.demo.service;
 
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.LoginResponse;
-import com.example.demo.service.AuthService;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
-
         if ("admin".equals(request.getUsername())
-                && "admin123".equals(request.getPassword())) {
-
-            return new LoginResponse("Login successful");
+                && "admin".equals(request.getPassword())) {
+            return new LoginResponse("Login successful", true);
         }
-
-        return new LoginResponse("Invalid credentials");
+        return new LoginResponse("Invalid credentials", false);
     }
 }
