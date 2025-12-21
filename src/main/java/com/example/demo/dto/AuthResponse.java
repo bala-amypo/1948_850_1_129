@@ -1,13 +1,13 @@
 package com.example.demo.dto;
 
-public class LoginResponse {
+public class AuthResponse {
 
     private String message;
     private boolean success;
 
-    public LoginResponse() {}
+    public AuthResponse() {}
 
-    public LoginResponse(String message, boolean success) {
+    public AuthResponse(String message, boolean success) {
         this.message = message;
         this.success = success;
     }
