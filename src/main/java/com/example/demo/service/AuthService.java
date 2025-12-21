@@ -1,32 +1,10 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.AuthRequest;
-import com.example.demo.dto.AuthResponse;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.stereotype.Service;
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.LoginResponse;
 
-@Service
-public class AuthService {
+public interface AuthService {
 
-    private final AuthenticationManager authenticationManager;
+    LoginResponse login(LoginRequest request);
 
-    public AuthService(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-    }
-
-    public AuthResponse login(AuthRequest request) {
-        try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.getUsername(),
-                    request.getPassword()
-                )
-            );
-            return new AuthResponse("Login successful");
-        } catch (AuthenticationException e) {
-            return new AuthResponse("Invalid credentials");
-        }
-    }
 }
