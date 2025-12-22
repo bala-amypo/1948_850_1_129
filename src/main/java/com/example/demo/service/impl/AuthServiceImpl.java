@@ -1,3 +1,11 @@
+package com.example.demo.service.impl;
+
+import com.example.demo.AuthRequest;
+import com.example.demo.AuthResponse;
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.service.AuthService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +29,6 @@ public class AuthServiceImpl implements AuthService {
             return new AuthResponse("Invalid credentials", false);
         }
 
-        // 🔥 IMPORTANT FIX (matches instead of equals)
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return new AuthResponse("Invalid credentials", false);
         }
