@@ -15,9 +15,9 @@ public class AuthServiceImpl implements AuthService {
         if ("admin".equals(request.getUsername())
                 && "admin123".equals(request.getPassword())) {
 
-            return new AuthResponse("Login successful");
+            return new AuthResponse("Login successful", true);
         }
 
-        return new AuthResponse("Invalid credentials");
+        return new AuthResponse("Invalid credentials", false);
     }
 }
