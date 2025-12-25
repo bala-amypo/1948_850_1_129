@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AuthRequest;
+import com.example.demo.dto.AuthResponse;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.JwtTokenProvider;
@@ -26,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String login(AuthRequest request) {
+    public AuthResponse login(AuthRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
@@ -35,10 +36,12 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
 
-        return jwtTokenProvider.generateToken(
+        String token = jwtTokenProvider.generateToken(
                 user.getEmail(),
                 user.getRole(),
                 user.getId()
         );
+
+        return new AuthResponse(token);
     }
 }

@@ -2,21 +2,20 @@ package com.example.demo.dto;
 
 public class AuthResponse {
 
-    private String message;
-    private boolean success;
+    private String token;
 
-    public AuthResponse() {}
-
-    public AuthResponse(String message, boolean success) {
-        this.message = message;
-        this.success = success;
+    public AuthResponse() {
     }
 
-    public String getMessage() {
-        return message;
+    public AuthResponse(String token) {
+        this.token = token;
     }
 
-    public boolean isSuccess() {
-        return success;
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
