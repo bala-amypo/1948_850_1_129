@@ -13,6 +13,11 @@ import jakarta.persistence.EntityNotFoundException;
 public class ProductServiceImpl {
 
     private final ProductRepository productRepository;
+    @Override
+public List<Product> getAllProducts() {
+    return productRepository.findAll();
+}
+
 
     public ProductServiceImpl(ProductRepository productRepository) {
         this.productRepository = productRepository;
