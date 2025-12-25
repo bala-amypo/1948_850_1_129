@@ -1,20 +1,16 @@
-package com.example.demo.controller;
-
 import com.example.demo.model.Product;
 import com.example.demo.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 public class ProductController {
 
-    private final ProductService service;
-
-    public ProductController(ProductService service) {
-        this.service = service;
-    }
+    @Autowired
+    private ProductService service;
 
     @PostMapping
     public Product create(@RequestBody Product product) {
@@ -32,11 +28,11 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAll() {
+    public List<Product> getAllProducts() {
         return service.getAllProducts();
     }
 
-    @PutMapping("/{id}/deactivate")
+    @DeleteMapping("/{id}")
     public void deactivate(@PathVariable Long id) {
         service.deactivateProduct(id);
     }

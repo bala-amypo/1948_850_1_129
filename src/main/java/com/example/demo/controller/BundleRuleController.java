@@ -1,20 +1,16 @@
-package com.example.demo.controller;
-
 import com.example.demo.model.BundleRule;
 import com.example.demo.service.BundleRuleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/bundles")
+@RequestMapping("/bundles")
 public class BundleRuleController {
 
-    private final BundleRuleService service;
-
-    public BundleRuleController(BundleRuleService service) {
-        this.service = service;
-    }
+    @Autowired
+    private BundleRuleService service;
 
     @PostMapping
     public BundleRule create(@RequestBody BundleRule rule) {
@@ -22,7 +18,7 @@ public class BundleRuleController {
     }
 
     @GetMapping("/active")
-    public List<BundleRule> getActive() {
+    public List<BundleRule> getActiveRules() {
         return service.getActiveRules();
     }
 }
