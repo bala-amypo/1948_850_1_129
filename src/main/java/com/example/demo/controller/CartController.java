@@ -2,8 +2,8 @@ package com.example.demo.controller;
 
 import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.entity.Cart;
-import com.example.demo.entity.CartItem;
+import com.example.demo.model.Cart;
+import com.example.demo.model.CartItem;
 import com.example.demo.service.CartService;
 
 @RestController
@@ -17,7 +17,8 @@ public class CartController {
     }
 
     @PostMapping("/{cartId}/items")
-    public Cart addItem(@PathVariable Long cartId, @RequestBody CartItem item) {
+    public Cart addItem(@PathVariable Long cartId,
+                        @RequestBody CartItem item) {
         return cartService.addItem(cartId, item);
     }
 }

@@ -3,8 +3,8 @@ package com.example.demo.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.entity.Cart;
-import com.example.demo.entity.CartItem;
+import com.example.demo.model.Cart;
+import com.example.demo.model.CartItem;
 import com.example.demo.repository.CartRepository;
 import com.example.demo.service.CartService;
 
@@ -24,7 +24,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
 
-        // 🔴 REQUIRED FOR TESTCASE
+        // ⭐ REQUIRED TESTCASE
         if (!cart.isActive()) {
             throw new IllegalArgumentException("Inactive cart cannot accept items");
         }
