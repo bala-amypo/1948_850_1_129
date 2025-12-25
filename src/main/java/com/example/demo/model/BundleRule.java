@@ -1,13 +1,29 @@
 package com.example.demo.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "bundle_rules")
 public class BundleRule {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String ruleName;
+
+    // CSV string like "10,12"
+    @Column(nullable = false)
     private String requiredProductIds;
+
+    @Column(nullable = false)
     private Double discountPercentage;
+
+    @Column(nullable = false)
     private Boolean active = true;
 
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
