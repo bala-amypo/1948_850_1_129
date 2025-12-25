@@ -1,5 +1,7 @@
 package com.example.demo.service.impl;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.demo.model.CartItem;
@@ -17,7 +19,11 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItem save(CartItem item) {
-        item.getProduct(); // just access, required by tests
         return repository.save(item);
+    }
+
+    @Override
+    public List<CartItem> getItemsForCart(Long cartId) {
+        return repository.findByCartId(cartId);
     }
 }

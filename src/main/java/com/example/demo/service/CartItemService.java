@@ -5,7 +5,8 @@ import com.example.demo.model.CartItem;
 
 public interface CartItemService {
 
-    CartItem addItemToCart(CartItem item);
+    CartItem save(CartItem item);
 
+    // ⭐ REQUIRED
     List<CartItem> getItemsForCart(Long cartId);
 }
