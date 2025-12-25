@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
-import com.example.demo.model.Cart;
+import com.example.demo.entity.Cart;
+import com.example.demo.entity.CartItem;
 
 public interface CartService {
-    Cart createCart(Long userId);
-    Cart getActiveCartForUser(Long userId);
+    Cart addItem(Long cartId, CartItem item);
 }
