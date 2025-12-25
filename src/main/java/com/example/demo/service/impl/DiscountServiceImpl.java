@@ -34,11 +34,11 @@ public class DiscountServiceImpl implements DiscountService {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
 
-        if (!cart.getActive()) {
+        if (!cart.isActive()) {
             return List.of();
         }
 
-        List<Discount> applied = new ArrayList<>();
+        List<Discount> result = new ArrayList<>();
 
         for (BundleRule rule : bundleRuleRepository.findAll()) {
 
@@ -48,8 +48,7 @@ public class DiscountServiceImpl implements DiscountService {
 
             for (CartItem ci : cart.getItems()) {
                 total = total.add(
-                        ci.getProduct()
-                          .getPrice()
+                        ci.getProduct().getPrice()
                           .multiply(BigDecimal.valueOf(ci.getQuantity()))
                 );
             }
@@ -65,9 +64,9 @@ public class DiscountServiceImpl implements DiscountService {
             );
             d.setAppliedAt(LocalDateTime.now());
 
-            applied.add(discountRepository.save(d));
+            result.add(discountRepository.save(d));
         }
 
-        return applied;
+        return result;
     }
 }
