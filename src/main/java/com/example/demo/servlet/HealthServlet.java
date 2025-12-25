@@ -20,6 +20,6 @@ public class HealthServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        doGet(req, resp); // allow POST requests as well
+        doGet(req, resp); // handle POST same as GET
     }
 }
