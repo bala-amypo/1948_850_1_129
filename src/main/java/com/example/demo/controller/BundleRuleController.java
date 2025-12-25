@@ -1,6 +1,7 @@
+package com.example.demo.controller;
+
 import com.example.demo.model.BundleRule;
 import com.example.demo.service.BundleRuleService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -9,8 +10,11 @@ import java.util.List;
 @RequestMapping("/bundles")
 public class BundleRuleController {
 
-    @Autowired
-    private BundleRuleService service;
+    private final BundleRuleService service;
+
+    public BundleRuleController(BundleRuleService service) {
+        this.service = service;
+    }
 
     @PostMapping
     public BundleRule create(@RequestBody BundleRule rule) {
