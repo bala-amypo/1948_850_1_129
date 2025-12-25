@@ -20,7 +20,16 @@ public class Cart {
 
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
-    public boolean isActive() { return active; }
+
+    // ⭐ REQUIRED BY TESTS
+    public boolean getActive() { 
+        return active; 
+    }
+
+    public boolean isActive() { 
+        return active; 
+    }
+
     public List<CartItem> getItems() { return items; }
 
     public void setId(Long id) { this.id = id; }
