@@ -1,9 +1,8 @@
 package com.example.demo.service.impl;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.AuthRequest;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.JwtTokenProvider;
@@ -23,24 +22,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User register(User user) {
-
-        Optional<User> existing = userRepository.findByEmail(user.getEmail());
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-
-        // NOTE: Password encoding can be added later
         return userRepository.save(user);
     }
 
     @Override
-    public String login(String email, String password) {
+    public String login(AuthRequest request) {
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
-        // Simple password check (safe for AmyPo; replace with encoder if needed)
-        if (!user.getPassword().equals(password)) {
+        if (!user.getPassword().equals(request.getPassword())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
 
