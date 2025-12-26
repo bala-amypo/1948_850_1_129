@@ -1,3 +1,4 @@
+// CartServiceImpl.java
 package com.example.demo.service.impl;
 
 import com.example.demo.model.Cart;
@@ -9,26 +10,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class CartServiceImpl implements CartService {
 
-    private final CartRepository cartRepository;
+    private final CartRepository repo;
 
-    public CartServiceImpl(CartRepository cartRepository) {
-        this.cartRepository = cartRepository;
+    public CartServiceImpl(CartRepository repo) {
+        this.repo = repo;
     }
 
-    @Override
     public Cart createCart(Long userId) {
-        return cartRepository.findByUserIdAndActiveTrue(userId)
-                .orElseGet(() -> {
-                    Cart cart = new Cart();
-                    cart.setUserId(userId);
-                    cart.setActive(true);
-                    return cartRepository.save(cart);
-                });
+        return repo.findByUserIdAndActiveTrue(userId)
+                .orElseGet(() -> repo.save(new Cart() {{
+                    setUserId(userId);
+                    setActive(true);
+                }}));
     }
 
-    @Override
     public Cart getActiveCartForUser(Long userId) {
-        return cartRepository.findByUserIdAndActiveTrue(userId)
+        return repo.findByUserIdAndActiveTrue(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Active cart not found"));
     }
 }
