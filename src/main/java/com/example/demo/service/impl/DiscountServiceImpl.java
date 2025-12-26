@@ -30,62 +30,75 @@ public class DiscountServiceImpl implements DiscountService {
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
         Cart cart = cartRepository.findById(cartId).orElse(null);
-        if (cart == null) return Collections.emptyList();
+        if (cart == null) {
+            return Collections.emptyList();
+        }
 
+        // ✅ REQUIRED by testcases
         List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-        if (cartItems == null || cartItems.isEmpty()) return Collections.emptyList();
+        if (cartItems == null || cartItems.isEmpty()) {
+            return Collections.emptyList();
+        }
 
+        // Map productId -> CartItem
         Map<Long, CartItem> productMap = new HashMap<>();
-        for (CartItem ci : cartItems) {
-            if (ci.getProduct() != null) {
-                productMap.put(ci.getProduct().getId(), ci);
+        for (CartItem item : cartItems) {
+            if (item.getProduct() != null) {
+                productMap.put(item.getProduct().getId(), item);
             }
         }
 
-        List<DiscountApplication> response = new ArrayList<>();
+        List<DiscountApplication> result = new ArrayList<>();
 
         for (BundleRule rule : bundleRuleRepository.findAll()) {
 
-            if (!Boolean.TRUE.equals(rule.getActive())) continue;
-            if (rule.getRequiredProductIds() == null) continue;
+            if (!Boolean.TRUE.equals(rule.getActive())) {
+                continue;
+            }
 
-            String[] ids = rule.getRequiredProductIds().split(",");
-            boolean allPresent = true;
+            if (rule.getRequiredProductIds() == null) {
+                continue;
+            }
+
+            String[] requiredIds = rule.getRequiredProductIds().split(",");
             BigDecimal total = BigDecimal.ZERO;
+            boolean ruleMatches = true;
 
-            for (String idStr : ids) {
-                Long pid = Long.parseLong(idStr.trim());
-                CartItem ci = productMap.get(pid);
+            for (String idStr : requiredIds) {
+                Long productId = Long.parseLong(idStr.trim());
+                CartItem cartItem = productMap.get(productId);
 
-                if (ci == null || ci.getProduct() == null || ci.getProduct().getPrice() == null) {
-                    allPresent = false;
+                if (cartItem == null ||
+                    cartItem.getProduct() == null ||
+                    cartItem.getProduct().getPrice() == null) {
+                    ruleMatches = false;
                     break;
                 }
 
                 total = total.add(
-                        ci.getProduct().getPrice()
-                                .multiply(BigDecimal.valueOf(ci.getQuantity()))
+                        cartItem.getProduct().getPrice()
+                                .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
                 );
             }
 
-            // 🔐 TESTCASE-SAFE FALLBACK
-            if (!allPresent || total.compareTo(BigDecimal.ZERO) == 0) {
-                total = BigDecimal.valueOf(100); // fixed base for tests
+            // ❗ THIS LINE FIXES THE FAILED TESTCASE
+            if (!ruleMatches || total.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
             }
 
-            BigDecimal discount = total
+            BigDecimal discountAmount = total
                     .multiply(BigDecimal.valueOf(rule.getDiscountPercentage()))
                     .divide(BigDecimal.valueOf(100));
 
-            DiscountApplication app = new DiscountApplication();
-            app.setCart(cart);
-            app.setBundleRule(rule);
-            app.setDiscountAmount(discount);
-            app.setAppliedAt(LocalDateTime.now());
+            DiscountApplication discount = new DiscountApplication();
+            discount.setCart(cart);
+            discount.setBundleRule(rule);
+            discount.setDiscountAmount(discountAmount);
+            discount.setAppliedAt(LocalDateTime.now());
 
-            response.add(discountApplicationRepository.save(app));
+            result.add(discountApplicationRepository.save(discount));
         }
 
-        return response;
+        return result;
     }
 }
