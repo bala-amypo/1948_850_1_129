@@ -1,9 +1,13 @@
-// CartItemServiceImpl.java
 package com.example.demo.service.impl;
 
-import com.example.demo.model.*;
-import com.example.demo.repository.*;
+import com.example.demo.model.Cart;
+import com.example.demo.model.CartItem;
+import com.example.demo.model.Product;
+import com.example.demo.repository.CartItemRepository;
+import com.example.demo.repository.CartRepository;
+import com.example.demo.repository.ProductRepository;
 import com.example.demo.service.CartItemService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,33 +15,65 @@ import java.util.List;
 @Service
 public class CartItemServiceImpl implements CartItemService {
 
-    private final CartItemRepository itemRepo;
-    private final CartRepository cartRepo;
-    private final ProductRepository productRepo;
+    private final CartItemRepository cartItemRepository;
+    private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
 
-    public CartItemServiceImpl(CartItemRepository i, CartRepository c, ProductRepository p) {
-        this.itemRepo = i;
-        this.cartRepo = c;
-        this.productRepo = p;
+    public CartItemServiceImpl(CartItemRepository cartItemRepository,
+                               CartRepository cartRepository,
+                               ProductRepository productRepository) {
+        this.cartItemRepository = cartItemRepository;
+        this.cartRepository = cartRepository;
+        this.productRepository = productRepository;
     }
 
+    @Override
     public CartItem addItemToCart(CartItem item) {
-        Cart cart = cartRepo.findById(item.getCart().getId()).orElseThrow();
-        if (!cart.getActive())
-            throw new IllegalArgumentException("active carts");
-        if (item.getQuantity() <= 0)
-            throw new IllegalArgumentException("Quantity");
-        Product product = productRepo.findById(item.getProduct().getId()).orElseThrow();
 
-        return itemRepo.findByCartIdAndProductId(cart.getId(), product.getId())
-                .map(ex -> {
-                    ex.setQuantity(ex.getQuantity() + item.getQuantity());
-                    return itemRepo.save(ex);
-                })
-                .orElseGet(() -> itemRepo.save(item));
+        if (item.getCart() == null || item.getCart().getId() == null) {
+            throw new IllegalArgumentException("Cart ID is required");
+        }
+
+        if (item.getProduct() == null || item.getProduct().getId() == null) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+
+        if (item.getQuantity() == null || item.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        // Fetch cart
+        Cart cart = cartRepository.findById(item.getCart().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Cart not found"));
+
+        if (!cart.getActive()) {
+            throw new IllegalArgumentException("Cannot add items to inactive cart");
+        }
+
+        // Fetch product
+        Product product = productRepository.findById(item.getProduct().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        if (!product.getActive()) {
+            throw new IllegalArgumentException("Cannot add inactive product to cart");
+        }
+
+        // Check if item already exists in cart
+        CartItem existing = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())
+                .orElse(null);
+
+        if (existing != null) {
+            existing.setQuantity(existing.getQuantity() + item.getQuantity());
+            return cartItemRepository.save(existing);
+        } else {
+            item.setCart(cart);
+            item.setProduct(product);
+            return cartItemRepository.save(item);
+        }
     }
 
+    @Override
     public List<CartItem> getItemsForCart(Long cartId) {
-        return itemRepo.findByCartId(cartId);
+        return cartItemRepository.findByCartId(cartId);
     }
 }
