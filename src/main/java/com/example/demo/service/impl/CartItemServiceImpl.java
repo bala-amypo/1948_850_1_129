@@ -6,26 +6,31 @@ import com.example.demo.model.Product;
 import com.example.demo.repository.CartItemRepository;
 import com.example.demo.repository.CartRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.service.CartItemService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
-public class CartItemServiceImpl {
+public class CartItemServiceImpl implements CartItemService {
 
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    public CartItemServiceImpl(CartItemRepository cartItemRepository,
-                               CartRepository cartRepository,
-                               ProductRepository productRepository) {
+    public CartItemServiceImpl(
+            CartItemRepository cartItemRepository,
+            CartRepository cartRepository,
+            ProductRepository productRepository
+    ) {
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
     }
 
+    @Override
     public CartItem addItemToCart(CartItem item) {
 
         if (item.getQuantity() == null || item.getQuantity() <= 0) {
@@ -36,25 +41,27 @@ public class CartItemServiceImpl {
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found"));
 
         if (!cart.getActive()) {
-            throw new IllegalArgumentException("Only active carts can accept items");
+            throw new IllegalArgumentException("Items can be added only to active carts");
         }
 
         Product product = productRepository.findById(item.getProduct().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())
-                .ifPresentOrElse(existing -> {
-                    existing.setQuantity(existing.getQuantity() + item.getQuantity());
-                    cartItemRepository.save(existing);
-                }, () -> {
-                    item.setCart(cart);
-                    item.setProduct(product);
-                    cartItemRepository.save(item);
-                });
+        Optional<CartItem> existing =
+                cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
 
-        return cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId()).orElse(item);
+        if (existing.isPresent()) {
+            CartItem ci = existing.get();
+            ci.setQuantity(ci.getQuantity() + item.getQuantity());
+            return cartItemRepository.save(ci);
+        }
+
+        item.setCart(cart);
+        item.setProduct(product);
+        return cartItemRepository.save(item);
     }
 
+    @Override
     public List<CartItem> getItemsForCart(Long cartId) {
         return cartItemRepository.findByCartId(cartId);
     }
