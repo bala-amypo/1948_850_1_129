@@ -18,21 +18,29 @@ public class AuthServiceImpl implements AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    // ✅ REGISTER LOGIC
+    @Override
+    public User register(String email, String password) {
+
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User user = new User();
+                    user.setEmail(email);
+                    user.setPassword(password);
+                    user.setRole("CUSTOMER");
+                    user.setActive(true);
+                    return userRepository.save(user);
+                });
+    }
+
+    // ✅ LOGIN LOGIC
     @Override
     public String login(String email, String password) {
 
-        // AUTO-CREATE USER IF NOT EXISTS
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setEmail(email);
-                    u.setPassword(password);
-                    u.setRole("CUSTOMER");
-                    u.setActive(true);
-                    return userRepository.save(u);
-                });
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
 
-        // PASSWORD CHECK
         if (!user.getPassword().equals(password)) {
             throw new IllegalArgumentException("Invalid credentials");
         }
