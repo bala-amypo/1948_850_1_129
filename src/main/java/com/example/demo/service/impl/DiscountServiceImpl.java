@@ -32,17 +32,10 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
-        Optional<Cart> cartOpt = cartRepository.findById(cartId);
-        if (cartOpt.isEmpty()) {
+        Cart cart = cartRepository.findById(cartId).orElse(null);
+        if (cart == null) {
             return Collections.emptyList();
         }
-
-        Cart cart = cartOpt.get();
-
-        // ❌ REMOVED active check (THIS IS THE FIX)
-        // if (!Boolean.TRUE.equals(cart.getActive())) {
-        //     return Collections.emptyList();
-        // }
 
         List<CartItem> items = cartItemRepository.findByCartId(cartId);
         if (items == null || items.isEmpty()) {
@@ -64,6 +57,12 @@ public class DiscountServiceImpl implements DiscountService {
         List<DiscountApplication> appliedDiscounts = new ArrayList<>();
 
         for (BundleRule rule : rules) {
+
+            // ✅ CRITICAL NULL SAFETY FIX
+            if (rule.getRequiredProductIds() == null ||
+                rule.getRequiredProductIds().trim().isEmpty()) {
+                continue;
+            }
 
             Set<Long> requiredIds = new HashSet<>();
             for (String id : rule.getRequiredProductIds().split(",")) {
