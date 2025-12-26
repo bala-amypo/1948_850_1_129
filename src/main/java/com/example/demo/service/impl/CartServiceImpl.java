@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service   // 🔴 THIS IS THE KEY FIX
-public class CartItemServiceImpl implements CartItemService {
+public class CartServiceImpl implements CartItemService {
 
     private final CartItemRepository cartItemRepository;
 
-    public CartItemServiceImpl(CartItemRepository cartItemRepository) {
+    public CartServiceImpl(CartItemRepository cartItemRepository) {
         this.cartItemRepository = cartItemRepository;
     }
 
