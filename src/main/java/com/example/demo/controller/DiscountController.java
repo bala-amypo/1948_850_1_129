@@ -1,4 +1,3 @@
-// DiscountController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.DiscountApplication;
@@ -11,14 +10,14 @@ import java.util.List;
 @RequestMapping("/api/discounts")
 public class DiscountController {
 
-    private final DiscountService service;
+    private final DiscountService discountService;
 
-    public DiscountController(DiscountService service) {
-        this.service = service;
+    public DiscountController(DiscountService discountService) {
+        this.discountService = discountService;
     }
 
     @PostMapping("/evaluate/{cartId}")
     public List<DiscountApplication> evaluate(@PathVariable Long cartId) {
-        return service.evaluateDiscounts(cartId);
+        return discountService.evaluateDiscounts(cartId);
     }
 }
