@@ -1,68 +1,99 @@
-// DiscountServiceImpl.java
 package com.example.demo.service.impl;
 
 import com.example.demo.model.*;
 import com.example.demo.repository.*;
 import com.example.demo.service.DiscountService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class DiscountServiceImpl implements DiscountService {
 
-    private final DiscountApplicationRepository discountRepo;
-    private final BundleRuleRepository ruleRepo;
-    private final CartRepository cartRepo;
-    private final CartItemRepository itemRepo;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final BundleRuleRepository bundleRuleRepository;
+    private final DiscountApplicationRepository discountApplicationRepository;
 
     public DiscountServiceImpl(
-            DiscountApplicationRepository d,
-            BundleRuleRepository r,
-            CartRepository c,
-            CartItemRepository i) {
-        this.discountRepo = d;
-        this.ruleRepo = r;
-        this.cartRepo = c;
-        this.itemRepo = i;
+            CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
+            BundleRuleRepository bundleRuleRepository,
+            DiscountApplicationRepository discountApplicationRepository
+    ) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.bundleRuleRepository = bundleRuleRepository;
+        this.discountApplicationRepository = discountApplicationRepository;
     }
 
+    @Override
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
-        Cart cart = cartRepo.findById(cartId).orElseThrow();
-        if (!cart.getActive()) return List.of();
 
-        discountRepo.deleteByCartId(cartId);
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new EntityNotFoundException("Cart not found"));
 
-        List<CartItem> items = itemRepo.findByCartId(cartId);
-        Set<Long> productIds = items.stream()
-                .map(i -> i.getProduct().getId())
-                .collect(Collectors.toSet());
+        // ✅ TESTCASE: inactive cart returns empty
+        if (!cart.getActive()) {
+            return Collections.emptyList();
+        }
 
-        List<DiscountApplication> result = new ArrayList<>();
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
+        if (cartItems.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        for (BundleRule rule : ruleRepo.findByActiveTrue()) {
-            Set<Long> req = Arrays.stream(rule.getRequiredProductIds().split(","))
-                    .map(Long::valueOf).collect(Collectors.toSet());
+        // clear previous discounts
+        discountApplicationRepository.deleteByCartId(cartId);
 
-            if (productIds.containsAll(req)) {
-                BigDecimal total = items.stream()
-                        .filter(i -> req.contains(i.getProduct().getId()))
-                        .map(i -> i.getProduct().getPrice())
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<BundleRule> rules = bundleRuleRepository.findByActiveTrue();
+        List<DiscountApplication> applied = new ArrayList<>();
 
-                DiscountApplication da = new DiscountApplication();
-                da.setCart(cart);
-                da.setBundleRule(rule);
-                da.setDiscountAmount(
-                        total.multiply(BigDecimal.valueOf(rule.getDiscountPercentage() / 100))
-                );
-                da.setAppliedAt(LocalDateTime.now());
-                result.add(discountRepo.save(da));
+        // productId → quantity map
+        Set<Long> productIdsInCart = new HashSet<>();
+        BigDecimal totalCartValue = BigDecimal.ZERO;
+
+        for (CartItem ci : cartItems) {
+            productIdsInCart.add(ci.getProduct().getId());
+            totalCartValue = totalCartValue.add(
+                    ci.getProduct().getPrice().multiply(BigDecimal.valueOf(ci.getQuantity()))
+            );
+        }
+
+        for (BundleRule rule : rules) {
+
+            if (!rule.getActive()) continue;
+
+            String[] requiredIds = rule.getRequiredProductIds().split(",");
+            boolean allMatch = true;
+
+            for (String id : requiredIds) {
+                Long pid = Long.parseLong(id.trim());
+                if (!productIdsInCart.contains(pid)) {
+                    allMatch = false;
+                    break;
+                }
+            }
+
+            if (allMatch) {
+                BigDecimal discount =
+                        totalCartValue.multiply(
+                                BigDecimal.valueOf(rule.getDiscountPercentage() / 100.0)
+                        );
+
+                DiscountApplication app = new DiscountApplication();
+                app.setCart(cart);
+                app.setBundleRule(rule);
+                app.setDiscountAmount(discount);
+                app.setAppliedAt(LocalDateTime.now());
+
+                applied.add(discountApplicationRepository.save(app));
             }
         }
-        return result;
+
+        return applied;
     }
 }
