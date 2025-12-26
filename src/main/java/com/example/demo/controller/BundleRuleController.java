@@ -1,22 +1,22 @@
+// BundleRuleController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.BundleRule;
 import com.example.demo.service.BundleRuleService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/bundles")
 public class BundleRuleController {
 
-    private final BundleRuleService bundleRuleService;
+    private final BundleRuleService service;
 
-    public BundleRuleController(BundleRuleService bundleRuleService) {
-        this.bundleRuleService = bundleRuleService;
+    public BundleRuleController(BundleRuleService service) {
+        this.service = service;
     }
 
     @PostMapping
-    public ResponseEntity<BundleRule> createRule(@RequestBody BundleRule rule) {
-        return ResponseEntity.ok(bundleRuleService.createRule(rule));
+    public BundleRule create(@RequestBody BundleRule rule) {
+        return service.createRule(rule);
     }
 }

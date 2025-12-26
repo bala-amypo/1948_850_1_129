@@ -1,8 +1,8 @@
+// CartItemController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.CartItem;
 import com.example.demo.service.CartItemService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,19 +11,19 @@ import java.util.List;
 @RequestMapping("/api/cart-items")
 public class CartItemController {
 
-    private final CartItemService cartItemService;
+    private final CartItemService service;
 
-    public CartItemController(CartItemService cartItemService) {
-        this.cartItemService = cartItemService;
+    public CartItemController(CartItemService service) {
+        this.service = service;
     }
 
     @PostMapping
-    public ResponseEntity<CartItem> add(@RequestBody CartItem item) {
-        return ResponseEntity.ok(cartItemService.addItemToCart(item));
+    public CartItem add(@RequestBody CartItem item) {
+        return service.addItemToCart(item);
     }
 
     @GetMapping("/cart/{cartId}")
-    public ResponseEntity<List<CartItem>> list(@PathVariable Long cartId) {
-        return ResponseEntity.ok(cartItemService.getItemsForCart(cartId));
+    public List<CartItem> getByCart(@PathVariable Long cartId) {
+        return service.getItemsForCart(cartId);
     }
 }
