@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface BundleRuleRepository extends JpaRepository<BundleRule, Long> {
 
-    List<BundleRule> findByActiveTrue();
+    List<BundleRule> findAll();   // ✅ FIX
 }
