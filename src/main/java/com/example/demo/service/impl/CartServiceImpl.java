@@ -1,28 +1,34 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.model.CartItem;
-import com.example.demo.repository.CartItemRepository;
-import com.example.demo.service.CartItemService;
+import com.example.demo.model.Cart;
+import com.example.demo.repository.CartRepository;
+import com.example.demo.service.CartService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+@Service
+public class CartServiceImpl implements CartService {
 
-@Service   // 🔴 THIS IS THE KEY FIX
-public class CartServiceImpl implements CartItemService {
+    private final CartRepository cartRepository;
 
-    private final CartItemRepository cartItemRepository;
-
-    public CartServiceImpl(CartItemRepository cartItemRepository) {
-        this.cartItemRepository = cartItemRepository;
+    public CartServiceImpl(CartRepository cartRepository) {
+        this.cartRepository = cartRepository;
     }
 
     @Override
-    public CartItem addItemToCart(CartItem item) {
-        return cartItemRepository.save(item);
+    public Cart createCart(Long userId) {
+        return cartRepository.findByUserIdAndActiveTrue(userId)
+                .orElseGet(() -> {
+                    Cart cart = new Cart();
+                    cart.setUserId(userId);
+                    cart.setActive(true);
+                    return cartRepository.save(cart);
+                });
     }
 
     @Override
-    public List<CartItem> getItemsForCart(Long cartId) {
-        return cartItemRepository.findByCartId(cartId);
+    public Cart getActiveCartForUser(Long userId) {
+        return cartRepository.findByUserIdAndActiveTrue(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Active cart not found"));
     }
 }
