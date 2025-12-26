@@ -1,13 +1,7 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.model.BundleRule;
-import com.example.demo.model.Cart;
-import com.example.demo.model.CartItem;
-import com.example.demo.model.DiscountApplication;
-import com.example.demo.repository.BundleRuleRepository;
-import com.example.demo.repository.CartItemRepository;
-import com.example.demo.repository.CartRepository;
-import com.example.demo.repository.DiscountApplicationRepository;
+import com.example.demo.model.*;
+import com.example.demo.repository.*;
 import com.example.demo.service.DiscountService;
 import org.springframework.stereotype.Service;
 
@@ -39,10 +33,6 @@ public class DiscountServiceImpl implements DiscountService {
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
         try {
-            if (cartId == null) {
-                return Collections.emptyList();
-            }
-
             Optional<Cart> cartOpt = cartRepository.findById(cartId);
             if (cartOpt.isEmpty() || !Boolean.TRUE.equals(cartOpt.get().getActive())) {
                 return Collections.emptyList();
@@ -53,7 +43,7 @@ public class DiscountServiceImpl implements DiscountService {
                 return Collections.emptyList();
             }
 
-            List<BundleRule> rules = bundleRuleRepository.findAll();
+            List<BundleRule> rules = bundleRuleRepository.findByActiveTrue();
             if (rules == null || rules.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -62,42 +52,28 @@ public class DiscountServiceImpl implements DiscountService {
 
             Set<Long> cartProductIds = new HashSet<>();
             for (CartItem ci : items) {
-                if (ci != null && ci.getProduct() != null && ci.getProduct().getId() != null) {
-                    cartProductIds.add(ci.getProduct().getId());
-                }
+                cartProductIds.add(ci.getProduct().getId());
             }
 
             List<DiscountApplication> applied = new ArrayList<>();
 
             for (BundleRule rule : rules) {
 
-                if (rule == null || rule.getRequiredProductIds() == null) {
-                    continue;
-                }
-
-                Set<Long> requiredIds = new HashSet<>();
+                Set<Long> required = new HashSet<>();
                 for (String s : rule.getRequiredProductIds().split(",")) {
-                    try {
-                        requiredIds.add(Long.valueOf(s.trim()));
-                    } catch (Exception ignored) {}
+                    required.add(Long.valueOf(s.trim()));
                 }
 
-                if (!cartProductIds.containsAll(requiredIds)) {
-                    continue;
-                }
+                if (!cartProductIds.containsAll(required)) continue;
 
                 BigDecimal total = BigDecimal.ZERO;
                 for (CartItem ci : items) {
-                    if (requiredIds.contains(ci.getProduct().getId())) {
+                    if (required.contains(ci.getProduct().getId())) {
                         total = total.add(
                                 ci.getProduct().getPrice()
                                         .multiply(BigDecimal.valueOf(ci.getQuantity()))
                         );
                     }
-                }
-
-                if (total.compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
                 }
 
                 BigDecimal discount = total
@@ -116,7 +92,7 @@ public class DiscountServiceImpl implements DiscountService {
             return applied;
 
         } catch (Exception e) {
-            return Collections.emptyList(); // NEVER throw
+            return Collections.emptyList();
         }
     }
 }
