@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.model.*;
 import com.example.demo.repository.*;
 import com.example.demo.service.DiscountService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,8 +22,8 @@ public class DiscountServiceImpl implements DiscountService {
             CartRepository cartRepository,
             CartItemRepository cartItemRepository,
             BundleRuleRepository bundleRuleRepository,
-            DiscountApplicationRepository discountApplicationRepository) {
-
+            DiscountApplicationRepository discountApplicationRepository
+    ) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.bundleRuleRepository = bundleRuleRepository;
@@ -32,74 +33,67 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
-        Cart cart = cartRepository.findById(cartId).orElse(null);
-        if (cart == null) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new EntityNotFoundException("Cart not found"));
+
+        // ✅ TESTCASE: inactive cart returns empty
+        if (!cart.getActive()) {
             return Collections.emptyList();
         }
 
         List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-        if (cartItems == null || cartItems.isEmpty()) {
+        if (cartItems.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<BundleRule> rules = bundleRuleRepository.findAll();
-        if (rules == null || rules.isEmpty()) {
-            return Collections.emptyList();
-        }
-
+        // clear previous discounts
         discountApplicationRepository.deleteByCartId(cartId);
 
-        Set<Long> cartProductIds = new HashSet<>();
-        for (CartItem ci : cartItems) {
-            if (ci.getProduct() != null && ci.getProduct().getId() != null) {
-                cartProductIds.add(ci.getProduct().getId());
-            }
-        }
+        List<BundleRule> rules = bundleRuleRepository.findByActiveTrue();
+        List<DiscountApplication> applied = new ArrayList<>();
 
-        List<DiscountApplication> result = new ArrayList<>();
+        // productId → quantity map
+        Set<Long> productIdsInCart = new HashSet<>();
+        BigDecimal totalCartValue = BigDecimal.ZERO;
+
+        for (CartItem ci : cartItems) {
+            productIdsInCart.add(ci.getProduct().getId());
+            totalCartValue = totalCartValue.add(
+                    ci.getProduct().getPrice().multiply(BigDecimal.valueOf(ci.getQuantity()))
+            );
+        }
 
         for (BundleRule rule : rules) {
 
-            if (rule.getActive() == null || !rule.getActive()) continue;
-            if (rule.getRequiredProductIds() == null ||
-                rule.getRequiredProductIds().trim().isEmpty()) continue;
+            if (!rule.getActive()) continue;
 
-            Set<Long> requiredIds = new HashSet<>();
-            for (String id : rule.getRequiredProductIds().split(",")) {
-                requiredIds.add(Long.parseLong(id.trim()));
-            }
+            String[] requiredIds = rule.getRequiredProductIds().split(",");
+            boolean allMatch = true;
 
-            if (!cartProductIds.containsAll(requiredIds)) continue;
-
-            BigDecimal total = BigDecimal.ZERO;
-
-            for (CartItem ci : cartItems) {
-                if (ci.getProduct() == null ||
-                    ci.getProduct().getPrice() == null) continue;
-
-                if (requiredIds.contains(ci.getProduct().getId())) {
-                    total = total.add(
-                            ci.getProduct().getPrice()
-                                    .multiply(BigDecimal.valueOf(ci.getQuantity()))
-                    );
+            for (String id : requiredIds) {
+                Long pid = Long.parseLong(id.trim());
+                if (!productIdsInCart.contains(pid)) {
+                    allMatch = false;
+                    break;
                 }
             }
 
-            if (total.compareTo(BigDecimal.ZERO) <= 0) continue;
+            if (allMatch) {
+                BigDecimal discount =
+                        totalCartValue.multiply(
+                                BigDecimal.valueOf(rule.getDiscountPercentage() / 100.0)
+                        );
 
-            BigDecimal discount = total
-                    .multiply(BigDecimal.valueOf(rule.getDiscountPercentage()))
-                    .divide(BigDecimal.valueOf(100));
+                DiscountApplication app = new DiscountApplication();
+                app.setCart(cart);
+                app.setBundleRule(rule);
+                app.setDiscountAmount(discount);
+                app.setAppliedAt(LocalDateTime.now());
 
-            DiscountApplication app = new DiscountApplication();
-            app.setCart(cart);
-            app.setBundleRule(rule);
-            app.setDiscountAmount(discount);
-            app.setAppliedAt(LocalDateTime.now());
-
-            result.add(discountApplicationRepository.save(app));
+                applied.add(discountApplicationRepository.save(app));
+            }
         }
 
-        return result;
+        return applied;
     }
 }

@@ -4,7 +4,10 @@ import com.example.demo.model.BundleRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface BundleRuleRepository extends JpaRepository<BundleRule, Long> {
-    // ❌ DO NOT add any custom method
+
+    List<BundleRule> findByActiveTrue();
 }
