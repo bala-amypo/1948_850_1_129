@@ -2,42 +2,38 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Product;
 import com.example.demo.service.ProductService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/products")
 public class ProductController {
 
-    private final ProductService service;
+    private final ProductService productService;
 
-    public ProductController(ProductService service) {
-        this.service = service;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @PostMapping
-    public Product create(@RequestBody Product product) {
-        return service.createProduct(product);
-    }
-
-    @GetMapping
-    public List<Product> getAll() {
-        return service.getAllProducts();
-    }
-
-    @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
-        return service.getProductById(id);
+    public ResponseEntity<Product> create(@RequestBody Product product) {
+        return ResponseEntity.ok(productService.createProduct(product));
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Long id, @RequestBody Product product) {
-        return service.updateProduct(id, product);
+    public ResponseEntity<Product> update(@PathVariable Long id,
+                                          @RequestBody Product product) {
+        return ResponseEntity.ok(productService.updateProduct(id, product));
     }
 
-    @DeleteMapping("/{id}")
-    public void deactivate(@PathVariable Long id) {
-        service.deactivateProduct(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> get(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductById(id));
+    }
+
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+        productService.deactivateProduct(id);
+        return ResponseEntity.ok().build();
     }
 }

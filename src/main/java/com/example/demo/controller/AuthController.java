@@ -1,12 +1,11 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.AuthRequest;
-import com.example.demo.dto.AuthResponse;
 import com.example.demo.service.AuthService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -16,7 +15,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest request) {
-        return authService.login(request);
+    public ResponseEntity<String> login(@RequestParam String email,
+                                        @RequestParam String password) {
+        String token = authService.login(email, password);
+        return ResponseEntity.ok(token);
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<Boolean> validate(@RequestParam String token) {
+        return ResponseEntity.ok(authService.validateToken(token));
     }
 }

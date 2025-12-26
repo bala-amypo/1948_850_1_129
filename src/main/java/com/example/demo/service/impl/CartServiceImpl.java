@@ -1,16 +1,12 @@
 package com.example.demo.service.impl;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.demo.model.Cart;
-import com.example.demo.model.CartItem;
 import com.example.demo.repository.CartRepository;
-import com.example.demo.service.CartService;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.stereotype.Service;
 
 @Service
-@Transactional
-public class CartServiceImpl implements CartService {
+public class CartServiceImpl {
 
     private final CartRepository cartRepository;
 
@@ -18,20 +14,18 @@ public class CartServiceImpl implements CartService {
         this.cartRepository = cartRepository;
     }
 
-    @Override
-    public Cart addItem(Long cartId, CartItem item) {
+    public Cart createCart(Long userId) {
+        return cartRepository.findByUserIdAndActiveTrue(userId)
+                .orElseGet(() -> {
+                    Cart cart = new Cart();
+                    cart.setUserId(userId);
+                    cart.setActive(true);
+                    return cartRepository.save(cart);
+                });
+    }
 
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
-
-        // ⭐ REQUIRED TESTCASE
-        if (!cart.isActive()) {
-            throw new IllegalArgumentException("Inactive cart cannot accept items");
-        }
-
-        item.setCart(cart);
-        cart.getItems().add(item);
-
-        return cartRepository.save(cart);
+    public Cart getActiveCartForUser(Long userId) {
+        return cartRepository.findByUserIdAndActiveTrue(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Active cart not found"));
     }
 }
