@@ -1,72 +1,79 @@
 package com.example.demo.service.impl;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.demo.model.*;
 import com.example.demo.repository.*;
-import com.example.demo.service.DiscountService;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
-@Transactional
-public class DiscountServiceImpl implements DiscountService {
+public class DiscountServiceImpl {
 
-    private final CartRepository cartRepository;
-    private final DiscountRepository discountRepository;
+    private final DiscountApplicationRepository discountApplicationRepository;
     private final BundleRuleRepository bundleRuleRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
 
-    public DiscountServiceImpl(CartRepository cartRepository,
-                               DiscountRepository discountRepository,
-                               BundleRuleRepository bundleRuleRepository) {
-        this.cartRepository = cartRepository;
-        this.discountRepository = discountRepository;
+    public DiscountServiceImpl(DiscountApplicationRepository discountApplicationRepository,
+                               BundleRuleRepository bundleRuleRepository,
+                               CartRepository cartRepository,
+                               CartItemRepository cartItemRepository) {
+        this.discountApplicationRepository = discountApplicationRepository;
         this.bundleRuleRepository = bundleRuleRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
     }
 
-    @Override
-    public List<Discount> evaluateDiscounts(Long cartId) {
+    public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
+        Cart cart = cartRepository.findById(cartId).orElse(null);
 
-        if (!cart.isActive()) {
-            return List.of();
+        if (cart == null || !cart.getActive()) {
+            return Collections.emptyList();
         }
 
-        List<Discount> result = new ArrayList<>();
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
+        if (cartItems.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        for (BundleRule rule : bundleRuleRepository.findAll()) {
+        discountApplicationRepository.deleteByCartId(cartId);
 
-            if (!rule.isActive()) continue;
+        Set<Long> productIdsInCart = new HashSet<>();
+        BigDecimal total = BigDecimal.ZERO;
 
-            BigDecimal total = BigDecimal.ZERO;
+        for (CartItem ci : cartItems) {
+            productIdsInCart.add(ci.getProduct().getId());
+            total = total.add(ci.getProduct().getPrice()
+                    .multiply(BigDecimal.valueOf(ci.getQuantity())));
+        }
 
-            for (CartItem ci : cart.getItems()) {
-                total = total.add(
-                        ci.getProduct().getPrice()
-                          .multiply(BigDecimal.valueOf(ci.getQuantity()))
-                );
+        List<DiscountApplication> applied = new ArrayList<>();
+
+        for (BundleRule rule : bundleRuleRepository.findByActiveTrue()) {
+
+            Set<Long> required = new HashSet<>();
+            for (String id : rule.getRequiredProductIds().split(",")) {
+                required.add(Long.valueOf(id.trim()));
             }
 
-            Discount d = new Discount();
-            d.setCart(cart);
-            d.setBundleRule(rule);
-            d.setDiscountAmount(
-                    total.multiply(
-                            BigDecimal.valueOf(rule.getDiscountPercentage())
-                                    .divide(BigDecimal.valueOf(100))
-                    )
-            );
-            d.setAppliedAt(LocalDateTime.now());
+            if (productIdsInCart.containsAll(required)) {
+                BigDecimal discountAmount = total
+                        .multiply(BigDecimal.valueOf(rule.getDiscountPercentage()))
+                        .divide(BigDecimal.valueOf(100));
 
-            result.add(discountRepository.save(d));
+                DiscountApplication app = new DiscountApplication();
+                app.setCart(cart);
+                app.setBundleRule(rule);
+                app.setDiscountAmount(discountAmount);
+                app.setAppliedAt(LocalDateTime.now());
+
+                applied.add(discountApplicationRepository.save(app));
+            }
         }
 
-        return result;
+        return applied;
     }
 }
