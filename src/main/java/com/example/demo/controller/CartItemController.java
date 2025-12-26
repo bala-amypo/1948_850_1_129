@@ -11,21 +11,19 @@ import java.util.List;
 @RequestMapping("/api/cart-items")
 public class CartItemController {
 
-    private final CartItemService cartItemService;
+    private final CartItemService service;
 
-    public CartItemController(CartItemService cartItemService) {
-        this.cartItemService = cartItemService;
+    public CartItemController(CartItemService service) {
+        this.service = service;
     }
 
     @PostMapping
     public ResponseEntity<CartItem> addItem(@RequestBody CartItem item) {
-        CartItem saved = cartItemService.addItemToCart(item);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(service.addItemToCart(item));
     }
 
     @GetMapping("/cart/{cartId}")
     public ResponseEntity<List<CartItem>> getItems(@PathVariable Long cartId) {
-        List<CartItem> items = cartItemService.getItemsForCart(cartId);
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(service.getItemsForCart(cartId));
     }
 }
