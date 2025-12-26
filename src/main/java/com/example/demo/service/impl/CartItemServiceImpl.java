@@ -29,29 +29,36 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItem addItemToCart(CartItem item) {
-        // Validate input
+
+        // ----------- VALIDATION -----------
+
         if (item.getCart() == null || item.getCart().getId() == null)
             throw new IllegalArgumentException("Cart ID is required");
+
         if (item.getProduct() == null || item.getProduct().getId() == null)
             throw new IllegalArgumentException("Product ID is required");
+
         if (item.getQuantity() == null || item.getQuantity() <= 0)
             throw new IllegalArgumentException("Quantity must be positive");
 
-        // Fetch cart
+        // ----------- FETCH CART -----------
+
         Cart cart = cartRepo.findById(item.getCart().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found"));
 
         if (!cart.getActive())
             throw new IllegalArgumentException("Cannot add items to inactive cart");
 
-        // Fetch product
+        // ----------- FETCH PRODUCT -----------
+
         Product product = productRepo.findById(item.getProduct().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
         if (!product.getActive())
             throw new IllegalArgumentException("Cannot add inactive product to cart");
 
-        // Check if item already exists
+        // ----------- AGGREGATE IF EXISTS -----------
+
         CartItem existing = cartItemRepo.findByCartIdAndProductId(cart.getId(), product.getId())
                 .orElse(null);
 
@@ -60,9 +67,11 @@ public class CartItemServiceImpl implements CartItemService {
             return cartItemRepo.save(existing);
         }
 
-        // Save new cart item
+        // ----------- SAVE NEW CART ITEM -----------
+
         item.setCart(cart);
         item.setProduct(product);
+
         return cartItemRepo.save(item);
     }
 

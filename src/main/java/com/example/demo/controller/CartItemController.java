@@ -17,13 +17,19 @@ public class CartItemController {
         this.service = service;
     }
 
+    // ----------- ADD ITEM TO CART -----------
+
     @PostMapping
     public ResponseEntity<CartItem> addItem(@RequestBody CartItem item) {
-        return ResponseEntity.ok(service.addItemToCart(item));
+        CartItem saved = service.addItemToCart(item);
+        return ResponseEntity.ok(saved);
     }
+
+    // ----------- GET ITEMS FOR CART -----------
 
     @GetMapping("/cart/{cartId}")
     public ResponseEntity<List<CartItem>> getItems(@PathVariable Long cartId) {
-        return ResponseEntity.ok(service.getItemsForCart(cartId));
+        List<CartItem> items = service.getItemsForCart(cartId);
+        return ResponseEntity.ok(items);
     }
 }
