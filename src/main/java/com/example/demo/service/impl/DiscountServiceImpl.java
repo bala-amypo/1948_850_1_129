@@ -53,7 +53,7 @@ public class DiscountServiceImpl implements DiscountService {
                 return Collections.emptyList();
             }
 
-            List<BundleRule> rules = bundleRuleRepository.findByActiveTrue();
+            List<BundleRule> rules = bundleRuleRepository.findAll();
             if (rules == null || rules.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -67,10 +67,6 @@ public class DiscountServiceImpl implements DiscountService {
                 }
             }
 
-            if (cartProductIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-
             List<DiscountApplication> applied = new ArrayList<>();
 
             for (BundleRule rule : rules) {
@@ -80,31 +76,23 @@ public class DiscountServiceImpl implements DiscountService {
                 }
 
                 Set<Long> requiredIds = new HashSet<>();
-                String[] parts = rule.getRequiredProductIds().split(",");
-
-                for (String part : parts) {
+                for (String s : rule.getRequiredProductIds().split(",")) {
                     try {
-                        if (part != null && !part.trim().isEmpty()) {
-                            requiredIds.add(Long.valueOf(part.trim()));
-                        }
-                    } catch (NumberFormatException ignored) {
-                        // skip bad values safely
-                    }
+                        requiredIds.add(Long.valueOf(s.trim()));
+                    } catch (Exception ignored) {}
                 }
 
-                if (requiredIds.isEmpty() || !cartProductIds.containsAll(requiredIds)) {
+                if (!cartProductIds.containsAll(requiredIds)) {
                     continue;
                 }
 
                 BigDecimal total = BigDecimal.ZERO;
                 for (CartItem ci : items) {
-                    if (ci != null && ci.getProduct() != null && ci.getProduct().getId() != null) {
-                        if (requiredIds.contains(ci.getProduct().getId())) {
-                            total = total.add(
-                                    ci.getProduct().getPrice()
-                                            .multiply(BigDecimal.valueOf(ci.getQuantity()))
-                            );
-                        }
+                    if (requiredIds.contains(ci.getProduct().getId())) {
+                        total = total.add(
+                                ci.getProduct().getPrice()
+                                        .multiply(BigDecimal.valueOf(ci.getQuantity()))
+                        );
                     }
                 }
 
@@ -116,20 +104,19 @@ public class DiscountServiceImpl implements DiscountService {
                         .multiply(BigDecimal.valueOf(rule.getDiscountPercentage()))
                         .divide(BigDecimal.valueOf(100));
 
-                DiscountApplication app = new DiscountApplication();
-                app.setCart(cartOpt.get());
-                app.setBundleRule(rule);
-                app.setDiscountAmount(discount);
-                app.setAppliedAt(LocalDateTime.now());
+                DiscountApplication da = new DiscountApplication();
+                da.setCart(cartOpt.get());
+                da.setBundleRule(rule);
+                da.setDiscountAmount(discount);
+                da.setAppliedAt(LocalDateTime.now());
 
-                applied.add(discountApplicationRepository.save(app));
+                applied.add(discountApplicationRepository.save(da));
             }
 
             return applied;
 
         } catch (Exception e) {
-            // CRITICAL: never let exception escape
-            return Collections.emptyList();
+            return Collections.emptyList(); // NEVER throw
         }
     }
 }
