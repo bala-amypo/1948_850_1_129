@@ -7,7 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DiscountApplicationRepository extends JpaRepository<DiscountApplication, Long> {
+public interface DiscountApplicationRepository
+        extends JpaRepository<DiscountApplication, Long> {
 
     void deleteByCartId(Long cartId);
 
