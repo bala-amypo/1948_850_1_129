@@ -1,61 +1,53 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.model.*;
-import com.example.demo.repository.*;
-import com.example.demo.service.DiscountService;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.model.*;
+import com.example.demo.repository.*;
+import com.example.demo.service.DiscountService;
+
 @Service
 public class DiscountServiceImpl implements DiscountService {
 
-    private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
-    private final BundleRuleRepository bundleRuleRepository;
-    private final DiscountApplicationRepository discountApplicationRepository;
+    @Autowired
+    private CartRepository cartRepository;
 
-    public DiscountServiceImpl(
-            CartRepository cartRepository,
-            CartItemRepository cartItemRepository,
-            BundleRuleRepository bundleRuleRepository,
-            DiscountApplicationRepository discountApplicationRepository) {
+    @Autowired
+    private CartItemRepository cartItemRepository;
 
-        this.cartRepository = cartRepository;
-        this.cartItemRepository = cartItemRepository;
-        this.bundleRuleRepository = bundleRuleRepository;
-        this.discountApplicationRepository = discountApplicationRepository;
-    }
+    @Autowired
+    private BundleRuleRepository bundleRuleRepository;
+
+    @Autowired
+    private DiscountApplicationRepository discountApplicationRepository;
 
     @Override
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
-        Cart cart = cartRepository.findById(cartId).orElse(null);
-        if (cart == null) return Collections.emptyList();
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-        if (cartItems == null || cartItems.isEmpty()) return Collections.emptyList();
-
-        // ✅ SAFE: use findAll() only
-        List<BundleRule> rules = bundleRuleRepository.findAll();
-        if (rules.isEmpty()) return Collections.emptyList();
-
-        discountApplicationRepository.deleteByCartId(cartId);
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        if (cartItems.isEmpty()) return Collections.emptyList();
 
         Set<Long> cartProductIds = new HashSet<>();
-        for (CartItem ci : cartItems) {
-            if (ci.getProduct() != null) {
-                cartProductIds.add(ci.getProduct().getId());
+        for (CartItem item : cartItems) {
+            if (item.getProduct() != null) {
+                cartProductIds.add(item.getProduct().getId());
             }
         }
 
+        List<BundleRule> rules = bundleRuleRepository.findAll();
         List<DiscountApplication> result = new ArrayList<>();
 
         for (BundleRule rule : rules) {
 
-            if (!rule.isActive()) continue;
+            if (rule.getActive() == null || !rule.getActive()) continue;
             if (rule.getRequiredProductIds() == null) continue;
 
             Set<Long> requiredIds = new HashSet<>();
