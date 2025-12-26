@@ -10,16 +10,14 @@ import java.io.PrintWriter;
 public class HealthServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
         resp.setStatus(200);
         resp.setContentType("text/plain");
+
         PrintWriter writer = resp.getWriter();
         writer.write("BUNDLE-OK");
         writer.flush();
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        doGet(req, resp); // handle POST same as GET
     }
 }
