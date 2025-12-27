@@ -1,70 +1,48 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Product;
-import com.example.demo.service.ProductService;
+import com.example.demo.service.impl.ProductServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/products")
+@Tag(name = "Product Management", description = "APIs for managing products")
 public class ProductController {
-
-    private final ProductService productService;
-
-    public ProductController(ProductService productService) {
+    private final ProductServiceImpl productService;
+    
+    public ProductController(ProductServiceImpl productService) {
         this.productService = productService;
     }
-
-    // ================= CREATE =================
-
+    
     @PostMapping
+    @Operation(summary = "Create a new product", description = "Creates a new product with unique SKU")
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        return ResponseEntity.ok(productService.createProduct(product));
+        Product created = productService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-
-    // ================= GET ALL =================
-
-    @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
-    }
-
-    // ================= GET BY ID =================
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getProductById(id));
-    }
-
-    // ================= UPDATE BY ID =================
-
+    
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
-            @PathVariable Long id,
-            @RequestBody Product product) {
-
-        return ResponseEntity.ok(productService.updateProduct(id, product));
+    @Operation(summary = "Update product", description = "Updates product name and price")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        Product updated = productService.updateProduct(id, product);
+        return ResponseEntity.ok(updated);
     }
-
-    // ================= UPDATE (PUT WITHOUT ID – OPTIONAL) =================
-
-    @PutMapping
-    public ResponseEntity<Product> updateProductWithoutId(
-            @RequestBody Product product) {
-
-        if (product.getId() == null) {
-            throw new IllegalArgumentException("Product ID is required");
-        }
-        return ResponseEntity.ok(productService.updateProduct(product.getId(), product));
+    
+    @GetMapping("/{id}")
+    @Operation(summary = "Get product by ID", description = "Retrieves a product by ID")
+    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
     }
-
-    // ================= DELETE (SOFT DELETE) =================
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
+    
+    @PutMapping("/{id}/deactivate")
+    @Operation(summary = "Deactivate product", description = "Marks product as inactive")
+    public ResponseEntity<Void> deactivateProduct(@PathVariable Long id) {
         productService.deactivateProduct(id);
-        return ResponseEntity.ok("Product deactivated successfully");
+        return ResponseEntity.ok().build();
     }
 }
