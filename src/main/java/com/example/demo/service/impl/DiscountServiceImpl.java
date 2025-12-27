@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 import com.example.demo.model.BundleRule;
 import com.example.demo.model.Cart;
 import com.example.demo.model.CartItem;
-import com.example.demo.model.DiscountApplication; // ✅ CORRECT ENTITY
+import com.example.demo.model.DiscountApplication;
 import com.example.demo.repository.BundleRuleRepository;
 import com.example.demo.repository.CartItemRepository;
 import com.example.demo.repository.CartRepository;
@@ -30,7 +31,7 @@ public class DiscountServiceImpl implements DiscountService {
     @Autowired
     private BundleRuleRepository bundleRuleRepository;
 
-    // ✅ METHOD NAME MUST MATCH INTERFACE
+    // MUST MATCH INTERFACE METHOD NAME
     @Override
     public List<DiscountApplication> evaluateDiscounts(Long cartId) {
 
@@ -42,13 +43,13 @@ public class DiscountServiceImpl implements DiscountService {
             return result;
         }
 
-        // 2️⃣ Fetch cart items
+        // 2️⃣ Fetch all cart items
         List<CartItem> cartItems = cartItemRepository.findAll();
         if (cartItems == null || cartItems.isEmpty()) {
             return result;
         }
 
-        // 3️⃣ Collect product IDs from this cart
+        // 3️⃣ Collect product IDs for this cart
         Set<Long> cartProductIds = new HashSet<>();
         for (CartItem item : cartItems) {
             if (item.getCart() != null &&
@@ -63,13 +64,13 @@ public class DiscountServiceImpl implements DiscountService {
             return result;
         }
 
-        // 4️⃣ Fetch bundle rules
+        // 4️⃣ Fetch all bundle rules
         List<BundleRule> rules = bundleRuleRepository.findAll();
         if (rules == null || rules.isEmpty()) {
             return result;
         }
 
-        // 5️⃣ Apply rules
+        // 5️⃣ Apply each rule safely
         for (BundleRule rule : rules) {
 
             if (rule == null || rule.getRequiredProductIds() == null) {
@@ -100,7 +101,12 @@ public class DiscountServiceImpl implements DiscountService {
             DiscountApplication discount = new DiscountApplication();
             discount.setCart(cart);
             discount.setBundleRule(rule);
-            discount.setDiscountAmount(rule.getDiscountPercentage()); // test-safe
+
+            // 🔥 FIXED BigDecimal ERROR
+            discount.setDiscountAmount(
+                    BigDecimal.valueOf(rule.getDiscountPercentage())
+            );
+
             discount.setAppliedAt(LocalDateTime.now());
 
             result.add(discount);
