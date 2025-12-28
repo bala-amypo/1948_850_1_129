@@ -22,7 +22,7 @@ public class OpenApiConfig {
                         .version("1.0")
                         .description("Simple JWT Demo Project"))
                 .servers(List.of(
-                        new Server().url("https://9101.pro604cr.amypo.ai")
+                        new Server().url("https://9249.408procr.amypo.ai/")
                 ))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth",
