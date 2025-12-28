@@ -1,27 +1,48 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.BundleRule;
-import com.example.demo.service.impl.BundleRuleServiceImpl;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
+import com.example.demo.service.BundleRuleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/bundle-rules")
-@Tag(name = "Bundle Rules", description = "APIs for bundle discount rules")
+@SecurityRequirement(name="bearerAuth")
 public class BundleRuleController {
-    private final BundleRuleServiceImpl bundleRuleService;
-    
-    public BundleRuleController(BundleRuleServiceImpl bundleRuleService) {
-        this.bundleRuleService = bundleRuleService;
+
+    private final BundleRuleService service;
+
+    public BundleRuleController(BundleRuleService service) {
+        this.service = service;
     }
-    
+
     @PostMapping
-    @Operation(summary = "Create bundle rule", description = "Creates a new bundle discount rule")
-    public ResponseEntity<BundleRule> createRule(@RequestBody BundleRule rule) {
-        BundleRule created = bundleRuleService.createRule(rule);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<BundleRule> create(@RequestBody BundleRule rule) {
+        return ResponseEntity.ok(service.createRule(rule));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> update(@PathVariable Long id,
+                                         @RequestBody BundleRule rule) {
+        service.updateRule(id, rule);
+        return ResponseEntity.ok("Bundle rule updated successfully");
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BundleRule> get(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getRuleById(id));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<BundleRule>> active() {
+        return ResponseEntity.ok(service.getActiveRules());
+    }
+
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<String> deactivate(@PathVariable Long id) {
+        service.deactivateRule(id);
+        return ResponseEntity.ok("Bundle rule deactivated successfully");
     }
 }
